@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mixture-then-select"
+version = "0.1.0"
+description = "Domain allocation and subset selection for LLM fine-tuning"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  {name = "Luyang Zhang"},
+  {name = "Jialu Wang"},
+  {name = "Bebei Li"},
+]
+dependencies = ["numpy>=1.24,<3"]
+
+[project.urls]
+Paper = "https://arxiv.org/abs/2610.14028"
+Repository = "https://github.com/LZhang12345/mixture-then-select"
+
+[project.scripts]
+mts-select = "mixture_then_select.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

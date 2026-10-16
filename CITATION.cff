@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the accompanying paper."
+title: "Pick the Mixture, Not the Samples: Combinatorial Data Selection for LLMs"
+type: software
+authors:
+  - family-names: Zhang
+    given-names: Luyang
+  - family-names: Wang
+    given-names: Jialu
+  - family-names: Li
+    given-names: Bebei
+repository-code: "https://github.com/LZhang12345/mixture-then-select"
+url: "https://arxiv.org/abs/2610.14028"
+preferred-citation:
+  type: article
+  title: "Pick the Mixture, Not the Samples: Combinatorial Data Selection for LLMs"
+  authors:
+    - family-names: Zhang
+      given-names: Luyang
+    - family-names: Wang
+      given-names: Jialu
+    - family-names: Li
+      given-names: Bebei
+  journal: arXiv
+  year: 2026
+  volume: "abs/2610.14028"
+  doi: "10.48550/arXiv.2610.14028"
+  url: "https://arxiv.org/abs/2610.14028"

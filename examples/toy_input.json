@@ -1,0 +1,7 @@
+{
+  "domain_order": ["math", "code", "dialog"],
+  "sample_domains": ["math", "code", "dialog", "math", "code", "dialog", "math", "code", "dialog", "math", "code", "dialog"],
+  "learned_counts": {"math": 1, "code": 2, "dialog": 3},
+  "budget": 6,
+  "seed": 42
+}
