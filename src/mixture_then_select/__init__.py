@@ -1,4 +1,4 @@
-"""Mixture-then-Select with the fixed lambda-0.50 allocation rule."""
+"""Mixture-then-Select allocation and subset selection."""
 
 from .core import Selection, allocate, choose_mixture, select, selection_hash
 

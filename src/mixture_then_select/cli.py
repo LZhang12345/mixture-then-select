@@ -19,7 +19,7 @@ def _unique_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Select samples with MtS-lambda0.50")
+    parser = argparse.ArgumentParser(description="Select samples with Mixture-then-Select")
     parser.add_argument("--input", required=True, type=Path, help="local JSON specification")
     parser.add_argument("--output", required=True, type=Path, help="new selection JSON file")
     args = parser.parse_args()

@@ -111,7 +111,7 @@ class SelectionTests(unittest.TestCase):
     def test_output_has_selection_metadata(self):
         result = select(["a"] * 4, {"a": 2}, budget=2, domain_order=["a"])
         encoded = json.loads(json.dumps(result.to_dict(), allow_nan=False))
-        self.assertEqual(encoded["method"], "mts_lambda050")
+        self.assertEqual(encoded["method"], "mixture_then_select")
         self.assertEqual(encoded["allocation_weight"], 0.5)
         self.assertEqual(encoded["selection_sha256"], selection_hash(result.indices))
 

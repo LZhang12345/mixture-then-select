@@ -1,4 +1,4 @@
-"""Portable extraction of the evaluated lambda-0.50 selector."""
+"""Mixture-then-Select with equal learned and pool-proportional allocation."""
 
 from __future__ import annotations
 
@@ -147,7 +147,7 @@ class Selection:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "method": "mts_lambda050",
+            "method": "mixture_then_select",
             "allocation_weight": ALLOCATION_WEIGHT,
             "within_domain_selection": "deterministic_random",
             "seed": self.seed,
@@ -167,7 +167,7 @@ def select(
     domain_order: Sequence[str],
     seed: int = 42,
 ) -> Selection:
-    """Select exactly budget distinct pool positions using MtS-lambda0.50.
+    """Select exactly budget distinct pool positions using Mixture-then-Select.
 
     Input row order, domain names/order, learned counts and seed determine
     the subset. The selection seed is independent of a later training seed.
