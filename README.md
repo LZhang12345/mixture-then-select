@@ -1,57 +1,35 @@
-# Mixture-then-Select
+<div align="center">
+
+<h1>Mixture-then-Select</h1>
+
+<p><strong>Pick the Mixture, Not the Samples:<br>Combinatorial Data Selection for LLMs</strong></p>
+
+<p>Luyang Zhang &middot; Jialu Wang &middot; Bebei Li</p>
+
+<p>
+  <a href="https://arxiv.org/abs/2610.14028"><img src="https://img.shields.io/badge/arXiv-2610.14028-b31b1b" alt="Paper on arXiv"></a>
+  <a href="https://github.com/LZhang12345/mixture-then-select/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/LZhang12345/mixture-then-select/tests.yml?branch=main&amp;label=tests" alt="Tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-555555" alt="MIT license"></a>
+</p>
+
+<p><a href="#quick-start">Quick start</a> &middot; <a href="#method">Method</a> &middot; <a href="#use-your-own-data">Usage</a> &middot; <a href="#citation">Citation</a></p>
+
+</div>
+
+## Overview
 
 **Choose how much data to take from each domain, then choose the samples.**
 
-Code for [Pick the Mixture, Not the Samples: Combinatorial Data Selection for LLMs](https://arxiv.org/abs/2610.14028) by Luyang Zhang, Jialu Wang, and Bebei Li.
-
-## Intuition
-
-A sample's usefulness depends on what else is selected: some samples reinforce one another, while others repeat information. Ranking every sample in one list can therefore miss useful combinations across domains. Mixture-then-Select separates two decisions:
+A sample's usefulness depends on what else is selected: some samples reinforce one another, while others repeat information. Ranking every sample in one list can therefore miss useful combinations across domains. Mixture-then-Select (MtS) separates two decisions:
 
 1. **Choose the mixture.** Use calibration measurements to predict which domain counts will be useful.
 2. **Fill the allocation.** Select the requested number of samples from each domain.
 
-This repository provides the CPU allocation and selection code for Mixture-then-Select (MtS).
+This repository provides the CPU allocation and selection code. It takes a learned domain allocation as input.
 
-## Mathematical intuition
+## Quick start
 
-The paper approximates a subset's utility using individual values and pairwise interactions:
-
-$$
-u(S) \approx \sum_{i\in S} v_i + \sum_{\{i,j\}\subseteq S}\varphi_{ij}.
-$$
-
-Here, $v_i$ measures sample $i$'s individual value. A positive $\varphi_{ij}$ means that the pair is more useful together; a negative value indicates redundancy or interference. Ranking only by $v_i$ leaves these interactions out.
-
-Now let $n_c$ be the number of selected samples from domain $c$. If $\bar\varphi_{cd}$ is the mean interaction between domains $c$ and $d$, their contribution is approximately $\bar\varphi_{cd}n_cn_d$. This gives the domain counts a direct role in utility and motivates learning a predictor $\hat g$ over allocations:
-
-$$
-\hat{\mathbf n}\in\arg\max_{\mathbf n}\hat g(\mathbf n)
-\quad\text{subject to}\quad
-\sum_c n_c=m,\qquad 0\le n_c\le |C_c|,\qquad n_c\in\mathbb Z.
-$$
-
-Here, $m$ is the sample budget and $C_c$ is the pool of samples in domain $c$. Once the counts are chosen, selection fills each domain's allocation. The search is over domain counts, while within-domain selection determines the individual samples.
-
-## Default allocation and selection
-
-The implementation blends the learned allocation equally with the pool-proportional allocation:
-
-$$
-\mathbf n^{\mathrm{pool}}=\operatorname{Round}_m\!\left(m\frac{(|C_1|,\ldots,|C_T|)}{N}\right),
-\qquad
-\mathbf n=\operatorname{Round}_m\!\left(\frac{\hat{\mathbf n}+\mathbf n^{\mathrm{pool}}}{2}\right).
-$$
-
-$N$ is the pool size. $\operatorname{Round}_m$ uses largest-remainder rounding so the integer counts sum to exactly $m$. The blend keeps part of the pool's original composition while moving toward the learned allocation. The code then fills each domain using a deterministic random order with seed 42.
-
-For example, if the pool proportions assign 8 slots to a domain and the learned allocation assigns 2, the blended allocation assigns 5. All domain counts together still sum to the selection budget.
-
-The paper's Algorithm 1 fills domains by attribution ranking; the default implementation here uses deterministic random completion within each domain.
-
-## Install and run
-
-Python 3.10 or newer and NumPy are sufficient. Selection runs on CPU.
+Requires **Python 3.10+** and **NumPy**. The example runs on CPU and creates its inputs in memory.
 
 ```bash
 git clone https://github.com/LZhang12345/mixture-then-select.git
@@ -60,7 +38,29 @@ python -m pip install -e .
 python examples/toy_selection.py
 ```
 
-The example creates domain labels in memory. Supply your own ordered pool labels and learned allocation for real use:
+## Method
+
+The paper approximates a subset's utility using individual values and pairwise interactions:
+
+```math
+u(S) \approx \sum_{i\in S} v_i + \sum_{i<j,\ i,j\in S}\varphi_{ij}.
+```
+
+Here, $`v_i`$ is sample $`i`$'s individual value. Positive $`\varphi_{ij}`$ indicates complementarity; negative values indicate redundancy or interference. Ranking only by individual values leaves these interactions out.
+
+If $`n_c`$ samples come from domain $`c`$, the mean interaction between domains $`c`$ and $`d`$ contributes approximately $`\bar{\varphi}_{cd}n_cn_d`$. Domain counts therefore affect utility directly. MtS uses a learned predictor $`\hat g`$ to choose those counts:
+
+```math
+\hat{\mathbf n}\in\arg\max_{\mathbf n\in\mathcal F_m}\hat g(\mathbf n).
+```
+
+The feasible set $`\mathcal F_m`$ contains integer domain counts that sum to the sample budget $`m`$ without exceeding any domain's capacity. Once the counts are chosen, selection fills each domain's allocation.
+
+**Implementation.** The code blends the learned allocation equally with the pool-proportional allocation, then selects samples using a deterministic random order within each domain. Algorithm 1 in the paper uses attribution ranking for this final step.
+
+## Use your own data
+
+Supply your ordered pool labels and learned allocation:
 
 ```python
 from mixture_then_select import select
@@ -87,11 +87,11 @@ The command-line interface accepts the same inputs as JSON:
 mts-select --input examples/toy_input.json --output selection.json
 ```
 
-The output includes selected positions, domain counts, the selection seed, and a SHA-256 of the selected index list. Existing output files are preserved; choose a new output filename for another run.
+The output contains selected pool positions, domain counts, the seed, and a selection hash. Choose a new output filename for each run; existing files are preserved.
 
-## Connecting Stage 1
+### Connect your predictor
 
-`learned_counts` is the allocation produced by your calibrated utility predictor, before blending with the pool proportions. It must sum to the requested budget and fit within each domain's capacity. Calibration measurements and model training are supplied by the caller.
+`learned_counts` is your predictor's allocation before blending. It must sum to `budget` and fit within each domain's capacity. Calibration measurements and model training are supplied by the caller.
 
 If your predictor scores a finite catalog of feasible allocations, `choose_mixture` selects the highest-scoring candidate:
 
@@ -108,7 +108,22 @@ learned_counts = choose_mixture(
 )
 ```
 
-The candidate catalog and predictor outputs above are illustrative. Selection is deterministic for a fixed pool order, domain order, learned allocation, and selection seed. Training seeds can vary independently. In the released 50K rule, pool-proportional counts are rounded before blending and allocation ties follow `domain_order`.
+The candidate allocations and scores above are illustrative.
+
+<details>
+<summary><strong>Allocation and reproducibility details</strong></summary>
+
+Let $`p_c=|C_c|/N`$ be domain $`c`$'s share of the pool. The implementation first rounds the pool-proportional allocation, then rounds the equal blend with the learned allocation:
+
+$`\mathbf n^{\mathrm{pool}}=R_m(m\mathbf p).`$
+
+$`\mathbf n=R_m\left(\frac{\hat{\mathbf n}+\mathbf n^{\mathrm{pool}}}{2}\right).`$
+
+$`R_m`$ uses largest-remainder rounding to preserve the exact budget. Ties follow `domain_order`. For example, a domain assigned 8 slots by pool proportions and 2 by the learned allocation receives 5 before final rounding.
+
+Selection is deterministic for a fixed pool order, domain order, learned allocation, and selection seed. The default selection seed is 42; later training seeds can vary independently.
+
+</details>
 
 ## Tests
 
@@ -120,11 +135,9 @@ Tests cover exact quotas, capacity limits, deterministic selection, nested per-d
 
 The release was also replayed against the original 50K domain metadata: all 1,000 selected indices match the archived selection exactly.
 
-## License
-
-MIT. See [LICENSE](LICENSE).
-
 ## Citation
+
+If you use this code, please cite the paper:
 
 ```bibtex
 @misc{zhang2026pick,
@@ -137,3 +150,7 @@ MIT. See [LICENSE](LICENSE).
   url           = {https://arxiv.org/abs/2610.14028}
 }
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
